@@ -2,7 +2,7 @@
 
 > Xin Wang 
 
-Learn more about me in my [GitHub profile page](https://github.com/reiminer)
+Learn more about me in my [GitHub profile page](https://github.com/fredryce)
 
 
 The following is a sample of products created during the _"Data Visualization and Reproducible Research"_ course in Fall 2020.
@@ -10,11 +10,11 @@ The following is a sample of products created during the _"Data Visualization an
 
 ## Project 01
 
-In the `project_01/` folder you can find... _[short description of your revised project goes here]_
+In the `project_01/` contains the project based on the WorldCupMatches dataset contains ~4500 world cup matches from 1930 to 2014. Each row represents an individual match and the columns are the corresponding attributes. For this project, we are going to perform analysis on this dataset focusing primarily on the behaviors of individual countries.
 
 **Sample data visualization:** 
 
-_[include your favorite visualization from this project here]_
+
 <img src="https://github.com/reisanar/figs/raw/master/echarts.png" width="70%" height="70%">
 
 
@@ -22,7 +22,7 @@ _[include your favorite visualization from this project here]_
 
 ## Project 02
 
-In this project, I explored ... _[short description of your revised project goes here]_ Find the code and report in the `project_02/` folder.
+In this project, I explored the dataset Florida_Lakes, utilizing the powerful plotting functions in ggplot I was able to create interesting plots on lakes that are in Florida. Find the code and report in the `project_02/` folder.
 
 **Sample data visualization:** 
 
@@ -44,4 +44,4 @@ _[include your favorite visualization from this project here]_
 
 ### Moving Forward
 
-_add here a short reflection on what you learned and what you plan to continue exploring in terms of data visualization, data storytelling, reproducible research, and/or related topics_
+This is only the start of my journey for learning about the different techniques in data visualization. In the future I will explore with more dataset and improve on my skills on data story telling. 
