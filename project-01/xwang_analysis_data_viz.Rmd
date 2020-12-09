@@ -1,0 +1,234 @@
+---
+title: "Data Visualization - Mini-Project 1"
+author: "Xin Wang `xwang2945@floridapoly.org`"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+# WorldCupMatches dataset
+
+```{r}
+library(tidyverse)
+library(RColorBrewer)
+```
+
+```{r, warning=F}
+my_data <- read_csv("https://raw.githubusercontent.com/reisanar/datasets/master/WorldCupMatches.csv")
+```
+
+The WorldCupMatches dataset contains ~4500 world cup matches from 1930 to 2014. Each row represents a match and the columns are the corresponding attributes. For this project, we are going to perform analysis on this dataset focusing primarily on the behaviors of individual countries.
+
+```{r}
+head(my_data)
+
+```
+To analyze the cities that most matches are being played in, we group the dataset by the City attributes and perform a count on the number of instances for each city. From the result, we can tell that most world cup matches are hosted in Mexico City, cities like RIo and Montevideo are also popular for having world cup matches. Most of the matches occur within the south and central American cities. The visualization I chose to use in this case is the horizontal bar graph, which allows the full city name to be displayed on the left side rather than being on the bottom of the graph to prevent the audiences from tilting their head while reading the graph. For better visualization purposes, I also eliminated most of the cities from the list and only kept the top 10 cities with the most number of matches played.
+
+
+```{r}
+#city with most games played in
+my_data %>% 
+  filter(!is.na(City)) %>% 
+  group_by(City) %>% 
+  count(sort=T) %>% 
+  head(10) %>% 
+  ggplot(aes(x=fct_reorder(City, n), y=n, fill=City)) +
+  geom_bar(stat="identity") +
+  coord_flip() + 
+  theme_classic() +
+  theme(legend.position="none", axis.title.y=element_blank())+
+  labs(title="Top 10 cities for hosting world cup since 1930", y="Total number")
+
+
+```
+
+The next visualization I'm interested in is the match performances for each individual country. This task is rather challenging based on the given format of the data. The team can be on both the home side or the away side during a match so we created two separate data frames and joined them before plotting. After some manipulations, we were able to get a data frame containing all the different countries in the dataset, and their wins and loss match count on both the home side and away side.
+
+```{r}
+#number of games plays by each county
+games_played_home <- my_data %>% 
+  select(`Home Team Name`, `Home Team Goals`, `Away Team Goals`) %>% 
+  group_by(`Home Team Name`) %>% 
+  summarise(games=n(), wins=sum(`Home Team Goals` > `Away Team Goals`)) %>% 
+  rename(teamname=`Home Team Name`, home_games=games, home_wins=wins) %>% 
+  print()
+
+games_played_away <- my_data %>% 
+  select(`Away Team Name`, `Home Team Goals`, `Away Team Goals`) %>% 
+  group_by(`Away Team Name`) %>% 
+  summarise(games=n(), wins=sum(`Home Team Goals` > `Away Team Goals`)) %>% 
+  rename(teamname=`Away Team Name`, away_games = games, away_wins = wins) %>% 
+  print()
+
+joined_df <- inner_join(games_played_away, games_played_home, by="teamname") %>% 
+  mutate(total_games = away_games+home_games, total_wins=away_wins+home_wins) %>% 
+  filter(!is.na(teamname))
+joined_df
+
+  
+  
+```
+
+This plot shows the top countries with the most matches in the world cup, I used a horizontal lollipop plot instead of the bar plot for more clarity, and every country is given a unique color. The legend, as well as the y-axis label, are removed and a title is in place to describe to the audience what the dataset is about. Since the 1930 world cup, Brazil played the most matches in the world cup followed by Argentina and many European countries.
+
+```{r}
+joined_df %>% 
+  arrange(desc(total_wins)) %>% 
+  head(20)  %>%  
+  ggplot(aes(x=fct_reorder(teamname, total_wins), y=total_wins, color=teamname)) +
+  geom_pointrange(aes(ymin = 0, ymax = total_wins)) +
+  #geom_bar(stat = "identity")+
+  coord_flip() +
+  theme_minimal() +
+  guides(color = FALSE) +
+  theme(legend.position="none", axis.title.y=element_blank())+
+  labs(title="Top 20 countries with most wins", y="Total number")
+
+```
+The next two graphs are both designed to show proportions using data. The first percent stacked bar plot shows the win ratio for each country. I decide to use more distinct colors with blue representing the win presentation and red representing the loss percentage to present this graph to the audience. The legend is located top and the y-axis’s role is replaced by the title. Out of the top 20 countries with the most wins in the world cup, Hungry has the highest win percentage overall.
+
+
+```{r}
+#now we need to determine the proportion of wins vs game played for each country
+#to use position fill need to gather data into two columns
+joined_df %>% 
+  mutate(total_loss= total_games-total_wins) %>% 
+  select(teamname, total_loss, total_wins) %>% 
+  arrange(desc(total_wins)) %>% 
+  head(20) %>% 
+  print() %>%
+  gather(result, score, -teamname) %>% 
+  print() %>% 
+  ggplot(aes(x=teamname, y=score, fill=result)) +
+  geom_bar(position = "fill", stat = "identity") +
+  coord_flip() +
+  theme_minimal() +
+  scale_fill_brewer(name = "", labels = c("loss", "win"), palette="Set1") +
+  theme(axis.title.y=element_blank(), legend.position = "top")+
+  labs(title="Win ratios for top 20 countries with most wins", y="Percentage")
+
+
+```
+With the second percent stacked bar plot, I want to show the effect of the match location, which countries tend to perform better with away matches and which countries have better performances when the match is played home. Out of all the wins, It seems that Brazil, Germany, and Italy have more wins playing as the away team, while Mexico and Uruguay win more matches being the home team.
+
+```{r}
+#proportion home wins vs away wins, Does home offers a good advantage for some teams over others
+
+
+joined_df %>% 
+  select(teamname, home_wins, away_wins, total_wins) %>% 
+  arrange(desc(total_wins)) %>% 
+  head(20) %>%
+  select(-total_wins) %>% 
+  print() %>% 
+  gather(location_win, score, -teamname) %>% 
+  print() %>% 
+  ggplot(aes(x=teamname, y=score, fill=location_win)) +
+  geom_bar(position = "fill", stat = "identity") +
+  coord_flip() +
+  theme_minimal() +
+  scale_fill_brewer(name = "", labels = c("Away game", "Home game"), palette="Set2") +
+  theme(axis.title.y=element_blank(), legend.position = "top")+
+  labs(title="Win ratios home games vs away games", y="Percentage")
+
+
+```
+
+Next step I want to see which teams tend to win with a bigger score gap compare to others. To do this I created two more data frames showing the winning team’s score difference compare to their opponents when a match is won. I used a boxplot showing the distribution of data for all the won matches for each country. From the graph Hungry tends to have a larger score difference compare to other countries when they win a match. For this visualization I only focused on the teams with 5 or more games played in the world cup.
+
+```{r}
+#do the countries win with big score gap, make box plot
+#winning score gap and losing score gap
+
+home_team_wins <- my_data %>% 
+  mutate(score_gap=`Home Team Goals`- `Away Team Goals`) %>% 
+  filter(score_gap > 0) %>% 
+  select(`Home Team Name`, score_gap) %>% 
+  rename(teamname= `Home Team Name`) 
+
+
+
+  
+away_team_wins <- my_data %>% 
+  mutate(score_gap=`Away Team Goals`- `Home Team Goals`) %>% 
+  filter(score_gap > 0) %>% 
+  select(`Away Team Name`, score_gap) %>% 
+  rename(teamname= `Away Team Name`)
+
+
+total_gap <- rbind(away_team_wins, home_team_wins)
+
+total_gap 
+#remove countries with only 1 game
+
+countries_count <- total_gap %>% 
+  group_by(teamname) %>% 
+  count(sort=T) %>% 
+  filter(n>5) %>% 
+  print()
+
+total_gap %>%
+  right_join(countries_count, by="teamname") %>% 
+  ggplot() +
+  geom_boxplot( aes(x=fct_reorder(as.factor(teamname), score_gap , mean), y=score_gap), outlier.shape = NA, alpha=0.5) +
+  coord_flip() +
+  theme(axis.title.y=element_blank(), legend.position = "top")+
+  labs(title="Score advantage for match winners", y="Score difference")
+
+
+
+```
+I used a horizontal bar graph to perform analysis on when the teams score the most points in a match. The percentage is calculated based on the half time score over the total score of the time to judge whether the team tends to score more goals before or after the half time mark. From the graph, countries like USA and Paraguay have a high average for the percentage of points scored before the half time mark, while countries like Colombia have more endurance and tends to score more points after the half time mark.
+
+
+```{r}
+#how does score at half time affects the result
+#which teams tends to have better first half performance over second half
+#need to remove those that have 0 scores total games
+#based on winning games
+
+
+#winning team's performance on the first half of the game
+
+game_scores <- my_data %>% 
+  mutate(home_score_ratio= (`Half-time Home Goals` / `Home Team Goals`)*100, away_score_ratio =(`Half-time Away Goals` / `Away Team Goals`)*100) %>% 
+  replace(is.na(.), 0) %>% 
+  select(`Home Team Name`, `Away Team Name`, home_score_ratio, away_score_ratio, `Home Team Goals`, `Away Team Goals`) %>% 
+  print()
+
+
+home_game_data <- game_scores %>% 
+  filter(`Home Team Goals` > `Away Team Goals`) %>% 
+  select(`Home Team Name`, home_score_ratio) %>% 
+  rename(teamname=`Home Team Name`, first_half_score_ratio = home_score_ratio)
+
+away_game_data <- game_scores %>% 
+   filter(`Home Team Goals` < `Away Team Goals`) %>% 
+   select(`Away Team Name`, away_score_ratio) %>% 
+   rename(teamname=`Away Team Name`, first_half_score_ratio = away_score_ratio)
+
+
+total_data <- rbind(home_game_data, away_game_data) %>% 
+  right_join(countries_count, by="teamname") 
+
+
+
+
+
+total_data %>% 
+  group_by(teamname) %>% 
+  summarise(avg_half_time_ratio=mean(first_half_score_ratio)) %>% 
+  ggplot(aes(x=fct_reorder(teamname, avg_half_time_ratio), y=avg_half_time_ratio, fill=)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  theme_classic() +
+  theme(axis.title.y=element_blank(), legend.position = "top")+
+  labs(title="Half time score ratio for winning games", y="Percentage")
+  
+
+
+
+```
+

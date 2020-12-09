@@ -18,6 +18,7 @@ In this exercise you will explore methods to visualize text data and practice ho
 Using the dataset obtained from FSU's [Florida Climate Center](https://climatecenter.fsu.edu/climate-data-access-tools/downloadable-data), for a station at Tampa International Airport (TPA) from 2016 to 2017, attempt to recreate the charts shown below
 
 ```{r, message=FALSE, warning=FALSE}
+library(viridis)
 library(tidyverse)
 weather_tpa <- read_csv("https://github.com/reisanar/datasets/raw/master/tpa_weather_16_17.csv")
 # random sample 
@@ -35,13 +36,41 @@ knitr::include_graphics("https://github.com/reisanar/figs/raw/master/tpa_max_tem
 
 Hint: the option `binwidth = 3` was used with the `geom_histogram()` function.
 
+```{r}
+
+weather_tpa %>%
+  ggplot(aes(x=max_temp, fill=month)) +
+  geom_histogram(binwidth = 3) +
+  labs(x="Maximum temperatures", y="Number of days") +
+  theme_bw() +
+  theme(legend.position = "none")+
+  facet_wrap(~ fct_reorder(month.name[month], month)) +
+  scale_fill_viridis(option = "viridis")
+```
+
+
 (b) Recreate the plot below:
 
 ```{r, echo = FALSE, out.width="80%", fig.align='center'}
 knitr::include_graphics("https://github.com/reisanar/figs/raw/master/tpa_max_temps_density.png")
+
 ```
 
 Hint: check the `kernel` parameter of the `geom_density()` function, and use `bw = 0.5`.
+
+
+```{r}
+weather_tpa %>% 
+  ggplot(aes(x=max_temp)) +
+  geom_density(bw=0.5, size=1, fill="gray46", position = "identity", kernel="epanechnikov") +
+  geom_hline(yintercept=0, colour="white", size=1)+
+  labs(x="Maximum temperature", y="density") +
+  theme_bw() +
+  theme(panel.border = element_blank()) 
+  
+
+```
+
 
 (c) Recreate the chart below:
 
@@ -51,6 +80,20 @@ knitr::include_graphics("https://github.com/reisanar/figs/raw/master/tpa_max_tem
 
 Hint: default options for `geom_density()` were used. 
 
+```{r}
+weather_tpa %>% 
+  ggplot(aes(x=max_temp, fill=month, alpha=0.2)) +
+  geom_density(size=1) +
+  labs(x="Maximum temperature", y="", title="Density plots for each month in 2016") +
+  facet_wrap(~ fct_reorder(month.name[month], month)) +
+  scale_fill_viridis()+
+  theme_bw() +
+  theme(legend.position = "none")
+
+```
+
+
+
 (d) Recreate the chart below:
 
 ```{r, echo = FALSE, out.width="80%", fig.align='center'}
@@ -58,23 +101,54 @@ knitr::include_graphics("https://github.com/reisanar/figs/raw/master/tpa_max_tem
 ```
 
 Hint: default options for `geom_density()` were used. 
+```{r}
+library(ggridges)
+weather_tpa %>% 
+  ggplot(aes(x=max_temp, y=fct_reorder(month.name[month], month), fill = month)) +
+  geom_density_ridges(rel_min_height = 0, scale=2, size=1, quantile_lines=T, quantiles=2) +
+  scale_fill_viridis(option="viridis") +
+  labs(x="Maximum temperature", y="") +
+  theme_bw() +
+  theme(legend.position = "none", panel.border = element_blank()) 
+```
+
 
 (e) Recreate the plot below:
 
 ```{r, echo = FALSE, out.width="80%", fig.align='center'}
 knitr::include_graphics("https://github.com/reisanar/figs/raw/master/tpa_max_temps_ridges.png")
+weather_tpa %>% 
+  ggplot(aes(x=max_temp, y=fct_reorder(month.name[month], month), fill = month)) +
+  geom_density_ridges(rel_min_height = 0, scale=2, size=1, quantile_lines=T, quantiles=2) +
+  scale_fill_viridis(option="viridis") +
+  labs(x="Maximum temperature", y="") +
+  theme_bw() +
+  theme(legend.position = "none", panel.border = element_blank()) 
+  
 ```
 
 Hint: use the`ggridges` package, and the `geom_density_ridges()` function paying close attention to the `quantile_lines` and `quantiles` parameters.
+
+
+
 
 (f) Recreate the chart below:
 
 ```{r, echo = FALSE, out.width="80%", fig.align='center'}
 knitr::include_graphics("https://github.com/reisanar/figs/raw/master/tpa_max_temps_ridges_plasma.png")
+
 ```
 
 Hint: this uses the `plasma` option (color scale) for the _viridis_ palette.
-
+```{r}
+weather_tpa %>% 
+  ggplot(aes(x=max_temp, y=fct_reorder(month.name[month], month), fill = stat(x))) +
+  geom_density_ridges_gradient(rel_min_height = 0, scale=2, size=1, quantile_lines=T, quantiles=2) +
+  scale_fill_viridis_c(option = "C") +
+  labs(x="Maximum temperature", y="", fill="") +
+  theme_bw() +
+  theme(panel.border = element_blank()) 
+```
 
 
 
@@ -95,3 +169,9 @@ Make sure to include a copy of the dataset in the `data/` folder, and reference 
 - [FL Poly News 2019](https://github.com/reisanar/datasets/blob/master/poly_news_FL19.csv)
 
 (to get the "raw" data from any of the links listed above, simply click on the `raw` button of the GitHub page and copy the URL to be able to read it in your computer using the `read_csv()` function)
+
+
+
+
+
+

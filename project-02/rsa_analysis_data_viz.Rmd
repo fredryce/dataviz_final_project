@@ -1,0 +1,124 @@
+---
+title: "Data Visualization - Mini-Project 2"
+author: "Xin Wang `xwang2945@floridapoly.edu`"
+output: html_notebook
+---
+
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sit amet posuere massa. Donec dignissim enim quis ligula pretium congue. Vivamus at nisl at turpis dictum iaculis sit amet at nunc. In faucibus, nunc quis suscipit bibendum, sapien magna scelerisque dui, at lacinia enim risus non lectus. Mauris vel dignissim leo. Aenean interdum sem dolor. In ac mauris non quam scelerisque mattis. Mauris aliquet, magna sed convallis dictum, lectus elit cursus quam, in scelerisque orci nulla auctor eros.
+
+Integer ac volutpat urna. Duis elit dui, eleifend sit amet faucibus nec, feugiat quis purus. Ut blandit aliquet sapien, sit amet interdum risus blandit at. Ut finibus tellus blandit lacus ornare malesuada. Praesent semper ex non eros hendrerit, ut rhoncus tellus porttitor. Mauris urna turpis, pellentesque in nisl id, ornare eleifend enim. Sed consectetur ex molestie lectus gravida euismod.
+
+```{r}
+library(tidyr)
+library(tidyverse)
+library(purrr)
+library(readr)
+library(plotly)
+library(sf)
+library(broom)
+library(ggrepel)
+```
+
+
+```{r}
+
+data_lake <- read_sf("./../data/Florida_Lakes/Florida_Lakes.shp")
+data_county <- read_sf("./../data/Florida_Counties/Florida_Counties.shp")
+
+head(data_lake)
+head(data_county)
+```
+
+
+
+
+
+```{r}
+ggplot() +
+ geom_sf(data = filter(data_county, COUNTYNAME=="POLK")) +
+ geom_sf(data = filter(data_lake, COUNTY== "POLK"),
+ aes(fill = SHAPEAREA)) +
+  theme_minimal() +
+ labs(title = "Lakes in Polk County", fill="Size")
+
+```
+
+
+
+
+```{r}
+#interactive plot
+#number of lakes in counties
+lakecount <- data_lake %>% 
+  group_by(COUNTY) %>% 
+  count(sort=T) %>% 
+  rename(COUNTYNAME=COUNTY)
+
+county_join <- left_join(data_county, as.data.frame(lakecount), by="COUNTYNAME")
+
+mid <- mean(county_join$n, na.rm = T)
+
+plotoutput <- county_join %>% print() %>% 
+  replace(is.na(.), 0) %>% 
+  ggplot() +
+  geom_sf(aes(fill=n, text=paste0(COUNTYNAME, ": ", n))) +
+  theme(plot.title.position = "left") +
+  theme_minimal()+
+  scale_fill_gradient2(midpoint=mid, low="blue", mid="white",
+                     high="red", space ="Lab" ) +
+  labs(title = "Number of lakes by county", fill="Amount")
+
+#plotoutput
+ggplotly(plotoutput, tooltip = "text")
+  
+```
+
+
+
+```{r}
+#relationship model
+head(data_lake)
+
+lakesize <- data_lake %>% 
+  group_by(COUNTY) %>% 
+  summarise(total_lake_size = sum(SHAPEAREA, na.rm = T)) %>% 
+  rename(COUNTYNAME=COUNTY) %>% 
+  print()
+
+county_join_lakesize <- left_join(county_join, as.data.frame(lakesize), by="COUNTYNAME")
+
+top10county <- county_join %>% 
+  arrange(desc(n)) %>% 
+  head(10) 
+
+
+county_join_lakesize %>% 
+  print() %>% 
+  mutate(lakeratio = (total_lake_size/ShapeSTAre)*100) %>% 
+  filter(lakeratio <= 1) %>% 
+  ggplot(aes(ShapeSTAre, total_lake_size)) +
+  geom_point(aes(size=n)) +
+  geom_smooth(method = "lm",se = F) +
+  geom_label_repel(aes(label=ifelse(COUNTYNAME %in% top10county$COUNTYNAME ,COUNTYNAME,'')),
+                  size          = 3,
+                  segment.color = "grey50",
+                  ) +
+  labs(x="Total county area", y="Total lake area", size="Lake count") +
+  theme_minimal()
+```
+
+
+
+
+**a. What were the original charts you planned to create for this assignments? What steps were necessary for cleaning and preparing the data?**
+
+> I created 3 different plots for visualizing the dataset. The first plot shows the spatial information of the lakes and their sizes in Polk county, this plot is generated using the geom_sf function in ggplot. To create this plot we use a combination Florida county shapefile and the Florida lake shapefile. This spatial visualization doesn’t require alot of data processing, geom_sf function handles the data directly from the .shp file and plot it. The second plot shows spatial information in an interactive way using the plotly library. Data is processed first to count the number of lakes in each county, and join operation is performed on the Florida Lake and Florida County dataframe. Here we encountered an issue with joining the two data frames, due to both data frames containing geometry information. To join these two dataframes, the second dataframe needs to be coerced into an actual dataframe. The county name and the respective number of lakes are shown when the mouse hovers over the county. The third plot shows the relationship between the size of the county and the total size of the lakes that are in the county, a linear model is used to show the correlation.
+
+**b. What story could you tell with your plots? What difficulties did you encounter while creating the visualizations? What additional approaches do you think can be use to explore the data you selected?**
+
+> In the case of Florida lakes data, there is not too much data to work with. The plots are designed to show the distributions of lakes over the different counties in Florida, and the number of lakes and their sizes correlation to the county they are in. The spatial plots are a good way of visualizing this information. Some counties have many lakes but the sizes of the individual lakes are small, other counties have a large amount area but with no lakes.
+
+**c. How did you apply the principles of data visualizations and design for this assignment?**
+
+> I’ve incorporated multiples data visualization principles when designing the plot for visualization. I kept the graphs as simplistic as possible at the same time putting emphasis on the key areas of the graph. The colors are chosen to create good contrasts for the viewer, it clearly shows the differences between the different data points. Plots such as the interactive spatial plot allow the viewer to hover over the counties to view the exact number the color is representing.
