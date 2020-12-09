@@ -26,19 +26,18 @@ In this project, I explored the dataset Florida_Lakes, utilizing the powerful pl
 
 **Sample data visualization:** 
 
-_[include your favorite visualization from this project here]_
+
 <img src="https://github.com/fredryce/dataviz_final_project/blob/main/figures/lakes.png" width="60%" height="60%">
 
-(you can also place your figures in the `figures/` folder and use the `![](path_to_picture)` option to add the pictures here)
+
 
 
 ## Project 03
 
-In this project, I explored ... _[short description of your revised project goes here]_
+In this project, I explored distribution of maximum temperatures in the city of Tampa, based on weather station at the TPA facility.
 
 **Sample data visualization:** 
 
-_[include your favorite visualization from this project here]_
 <img src="https://github.com/fredryce/dataviz_final_project/blob/main/figures/temp.png" width="80%" height="80%">
 
 
